@@ -1,2 +1,1 @@
-# Keep several GB free before installing Node; a full disk corrupts the tarball (dyld abort).
 22
