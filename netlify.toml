@@ -1,9 +1,10 @@
 [build]
-  command = "npm ci --include=optional && npm run build"
+  # npm ci can skip cross-platform optional natives; install Linux bindings explicitly on Netlify.
+  command = "npm ci --include=optional && npm install --no-save @tailwindcss/oxide-linux-x64-gnu@4.2.2 lightningcss-linux-x64-gnu@1.32.0 && npm run build"
 
 [build.environment]
-  # Ensure Tailwind/lightningcss dev tooling installs on the Linux build image.
   NPM_CONFIG_PRODUCTION = "false"
+  NPM_CONFIG_OPTIONAL = "true"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
