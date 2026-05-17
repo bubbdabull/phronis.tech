@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-sans-body), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif-display), "Lora", ui-serif, Georgia, serif;
+  --font-mono: var(--font-mono-code), ui-monospace, monospace;
+
+  --color-phronis-void: #050608;
+  --color-phronis-base: #0a0c10;
+  --color-phronis-surface: #11141c;
+  --color-phronis-elevated: #181c27;
+  --color-phronis-border: rgba(255, 255, 255, 0.08);
+  --color-phronis-muted: #8b95a8;
+  --color-phronis-foreground: #e8ecf4;
+  --color-phronis-electric: #2f8bff;
+  --color-phronis-teal: #14f195;
+  --color-phronis-violet: #9945ff;
+  --color-phronis-amber: #e3a008;
+}
+
+@layer base {
+  /**
+   * Mobile / notched browsers (Safari, Chrome, Brave): stop horizontal drift, font inflation,
+   * and rubber-band sideways scroll; keep content within safe areas via .gutter-safe on shells.
+   */
+  html {
+    /* Sticky portal nav offset under fixed marketing header (~sm:min-h-16 + safe area) */
+    --site-header-height: 4.25rem;
+    scroll-behavior: smooth;
+    width: 100%;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  #main,
+  section[id] {
+    scroll-margin-top: calc(5.5rem + env(safe-area-inset-top, 0px));
+  }
+
+  body {
+    @apply bg-phronis-base text-phronis-foreground antialiased;
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+    letter-spacing: -0.01em;
+    background-image:
+      linear-gradient(to bottom, rgba(5, 6, 8, 0.94), rgba(10, 12, 16, 0.99)),
+      linear-gradient(rgba(20, 241, 149, 0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(47, 139, 255, 0.022) 1px, transparent 1px);
+    background-size: auto, 56px 56px, 56px 56px;
+    background-position: center;
+  }
+
+  #main {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-phronis-teal) 35%, transparent);
+    color: var(--color-phronis-void);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-phronis-teal);
+    outline-offset: 2px;
+  }
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@layer utilities {
+  /**
+   * Horizontal padding that respects display cutouts (notch) and home-indicator margins.
+   */
+  .gutter-safe {
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+
+  @media (width >= 40rem) {
+    .gutter-safe {
+      padding-left: max(1rem, env(safe-area-inset-left, 0px));
+      padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    }
+  }
+
+  @media (width >= 64rem) {
+    .gutter-safe {
+      padding-left: max(2rem, env(safe-area-inset-left, 0px));
+      padding-right: max(2rem, env(safe-area-inset-right, 0px));
+    }
+  }
+
+  /** Scrollable panes in dense terminal UIs — WebKit + Firefox. */
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-phronis-teal) 28%, transparent) transparent;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--color-phronis-teal) 32%, transparent);
+  }
+}
+
+/* Jupiter Plugin host (Client Portal → Buy PHR / #buy-phr) — RGB channels per Jupiter docs (no rgb() wrapper).
+   See https://dev.jup.ag/docs/guides/how-to-embed-a-swap-widget#colour-theme */
+.jupiter-swap-host {
+  --jupiter-plugin-primary: 20, 241, 149;
+  --jupiter-plugin-background: 10, 12, 16;
+  --jupiter-plugin-primaryText: 232, 236, 244;
+  --jupiter-plugin-warning: 251, 191, 36;
+  --jupiter-plugin-interactive: 28, 33, 46;
+  --jupiter-plugin-module: 17, 20, 28;
+}

@@ -1,0 +1,19 @@
+[package]
+name = "phronis_dao"
+version = "0.1.0"
+description = "Phronis DAO governance program (stub)"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "phronis_dao"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.30.1"

@@ -1,0 +1,22 @@
+[toolchain]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+phronis_dao = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFRSn"
+
+[programs.devnet]
+phronis_dao = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFRSn"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "anchor test"
+
+[workspace]
+members = ["programs/phronis_dao"]

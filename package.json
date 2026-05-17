@@ -1,0 +1,56 @@
+{
+  "name": "phronis-inc",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "start:local": "next start -H 127.0.0.1 -p 3000",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
+    "@privy-io/node": "^0.18.0",
+    "@privy-io/react-auth": "^3.25.0",
+    "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-slot": "^1.1.2",
+    "@solana-program/memo": "^0.11.0",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/sysvars": "5.5.1",
+    "@solana/wallet-adapter-base": "^0.9.27",
+    "@solana/wallet-adapter-react": "^0.15.39",
+    "@solana/web3.js": "^1.98.4",
+    "@supabase/supabase-js": "^2.105.4",
+    "buffer": "^6.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.6.3",
+    "lucide-react": "^0.487.0",
+    "next": "^15.2.4",
+    "permissionless": "0.2.47",
+    "process": "^0.11.10",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.55.0",
+    "recharts": "^3.8.1",
+    "resend": "^4.8.0",
+    "tailwind-merge": "^3.2.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.1.3",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "eslint": "^9.24.0",
+    "eslint-config-next": "^15.2.4",
+    "tailwindcss": "^4.1.3",
+    "typescript": "^5.8.3"
+  }
+}
