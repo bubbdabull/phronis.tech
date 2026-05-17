@@ -121,7 +121,7 @@ export async function POST(request: Request) {
     embeddedSolanaFromAccounts(rawAccounts),
   );
 
-  let syncTargets = buildSolanaSyncTargets(solanaLinked, clientEmbedded || null);
+  const syncTargets = buildSolanaSyncTargets(solanaLinked, clientEmbedded || null);
   const wallet_address = pickPrimaryEmbeddedSolana([...syncTargets.values()]) ?? (clientEmbedded || null);
 
   if (wallet_address && !syncTargets.has(wallet_address)) {

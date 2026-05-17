@@ -1,5 +1,9 @@
 [build]
-  command = "npm run build"
+  command = "npm ci --include=optional && npm run build"
+
+[build.environment]
+  # Ensure Tailwind/lightningcss dev tooling installs on the Linux build image.
+  NPM_CONFIG_PRODUCTION = "false"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
