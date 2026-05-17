@@ -1,6 +1,6 @@
 "use client";
 
-import { useFiatOnramp } from "@privy-io/react-auth";
+import { useFundWallet } from "@privy-io/react-auth/solana";
 import {
   ArrowRightLeft,
   Copy,
@@ -24,7 +24,7 @@ import type { WalletRow } from "@/_types/onboarding";
 import { getPhrDaoTokenMint } from "@/_lib/phronis-dao-token";
 import { getUsdcMint } from "@/_lib/phronis-usdc";
 import type { WalletTokenId } from "@/_lib/wallet/wallet-assets";
-import { getSolanaCaip2Chain, isSolanaFiatOnrampAvailable } from "@/_lib/privy-client-config";
+import { getSolanaCaip2Chain } from "@/_lib/privy-client-config";
 import { cn } from "@/_lib/utils";
 
 const PHR_MINT = getPhrDaoTokenMint() ?? "";
@@ -68,8 +68,7 @@ export function MemberWalletFundingCard({
     ethProvisioning,
     ensureEthAddress,
   } = useEthereumSmartWallet();
-  const { fund: fundFiat } = useFiatOnramp();
-  const fiatOnrampAvailable = isSolanaFiatOnrampAvailable();
+  const { fundWallet } = useFundWallet({ onUserExited: () => void onSync() });
 
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -96,28 +95,26 @@ export function MemberWalletFundingCard({
   }, []);
 
   const openFund = useCallback(
-    async (asset: "sol" | "usdc") => {
-      if (!primaryWallet || !fiatOnrampAvailable) return;
+    async (asset: "native-currency" | "USDC") => {
+      if (!primaryWallet) return;
       onBusyChange("fund");
       try {
-        await fundFiat({
-          source: { assets: ["usd"], defaultAsset: "usd" },
-          destination: {
-            asset,
+        await fundWallet({
+          address: primaryWallet,
+          options: {
             chain: solanaChain,
-            address: primaryWallet,
+            asset,
+            amount: asset === "USDC" ? "25" : "0.05",
           },
-          environment: process.env.NODE_ENV === "production" ? "production" : "sandbox",
-          defaultAmount: asset === "usdc" ? "25" : "50",
         });
       } catch {
-        /* modal closed or flow cancelled */
+        /* modal closed */
       } finally {
         onBusyChange("");
         await onSync();
       }
     },
-    [fiatOnrampAvailable, fundFiat, onBusyChange, onSync, primaryWallet, solanaChain],
+    [fundWallet, onBusyChange, onSync, primaryWallet, solanaChain],
   );
 
   return (
@@ -242,9 +239,8 @@ export function MemberWalletFundingCard({
                         type="button"
                         size="sm"
                         className="bg-phronis-teal text-phronis-void hover:opacity-90"
-                        disabled={!primaryWallet || !!busy || !fiatOnrampAvailable}
-                        title={!fiatOnrampAvailable ? "Card on-ramp requires Solana mainnet" : undefined}
-                        onClick={() => void openFund("sol")}
+                        disabled={!primaryWallet || !!busy}
+                        onClick={() => void openFund("native-currency")}
                       >
                         <WalletAssetAvatar kind="token" tokenId="sol" size={18} className="mr-2" />
                         Fund SOL
@@ -254,9 +250,8 @@ export function MemberWalletFundingCard({
                         size="sm"
                         variant="outline"
                         className="border-phronis-teal/40 text-phronis-teal hover:bg-phronis-teal/10"
-                        disabled={!primaryWallet || !!busy || !fiatOnrampAvailable}
-                        title={!fiatOnrampAvailable ? "Card on-ramp requires Solana mainnet" : undefined}
-                        onClick={() => void openFund("usdc")}
+                        disabled={!primaryWallet || !!busy}
+                        onClick={() => void openFund("USDC")}
                       >
                         <WalletAssetAvatar kind="token" tokenId="usdc" size={18} className="mr-2" />
                         {busy === "fund" ? "Opening…" : "Fund USDC"}
@@ -333,18 +328,8 @@ export function MemberWalletFundingCard({
                     <p className="font-medium text-phronis-foreground">Funding options</p>
                     <ol className="list-decimal space-y-2 pl-5 marker:text-phronis-teal/80">
                       <li>
-                        <strong className="text-phronis-foreground/90">Card on-ramp (Privy):</strong>{" "}
-                        {fiatOnrampAvailable ? (
-                          <>
-                            use Fund SOL or Fund USDC — Privy shows providers enabled in your dashboard (Meld, MoonPay, Coinbase, etc.) for
-                            your region.
-                          </>
-                        ) : (
-                          <>
-                            disabled on devnet. Set <code className="text-phronis-teal">NEXT_PUBLIC_SOLANA_CLUSTER=mainnet</code> in production
-                            to use card funding.
-                          </>
-                        )}
+                        <strong className="text-phronis-foreground/90">Card on-ramp (Privy):</strong> use Fund SOL or Fund USDC — card purchases
+                        require Solana mainnet in production; availability depends on your region and Privy dashboard settings.
                       </li>
                       <li>
                         <strong className="text-phronis-foreground/90">Exchange withdraw:</strong> send SOL (gas) and/or USDC (SPL) to the
