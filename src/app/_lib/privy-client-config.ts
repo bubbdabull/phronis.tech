@@ -28,6 +28,16 @@ export function getPrivyEmbeddedCreateOnLogin(): {
 }
 
 /** Optional paymaster context for `@privy-io/react-auth/smart-wallets` (public JSON only — prefer dashboard for secrets). */
+/** CAIP-2 Solana chain for Privy fiat on-ramp (`useFiatOnramp`). */
+export function getSolanaCaip2Chain(): "solana:mainnet" | "solana:devnet" {
+  return process.env.NEXT_PUBLIC_SOLANA_CLUSTER === "devnet" ? "solana:devnet" : "solana:mainnet";
+}
+
+/** Card/fiat on-ramps require mainnet — devnet cannot purchase real tokens. */
+export function isSolanaFiatOnrampAvailable(): boolean {
+  return process.env.NEXT_PUBLIC_SOLANA_CLUSTER !== "devnet";
+}
+
 export function getPrivySmartWalletPaymasterContext(): Record<string, unknown> | undefined {
   const raw = process.env.NEXT_PUBLIC_PRIVY_SMART_WALLET_PAYMASTER_CONTEXT_JSON?.trim();
   if (!raw) return undefined;

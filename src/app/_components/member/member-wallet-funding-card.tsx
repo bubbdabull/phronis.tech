@@ -1,6 +1,6 @@
 "use client";
 
-import { useFundWallet } from "@privy-io/react-auth/solana";
+import { useFiatOnramp } from "@privy-io/react-auth";
 import {
   ArrowRightLeft,
   Copy,
@@ -24,6 +24,7 @@ import type { WalletRow } from "@/_types/onboarding";
 import { getPhrDaoTokenMint } from "@/_lib/phronis-dao-token";
 import { getUsdcMint } from "@/_lib/phronis-usdc";
 import type { WalletTokenId } from "@/_lib/wallet/wallet-assets";
+import { getSolanaCaip2Chain, isSolanaFiatOnrampAvailable } from "@/_lib/privy-client-config";
 import { cn } from "@/_lib/utils";
 
 const PHR_MINT = getPhrDaoTokenMint() ?? "";
@@ -67,7 +68,8 @@ export function MemberWalletFundingCard({
     ethProvisioning,
     ensureEthAddress,
   } = useEthereumSmartWallet();
-  const { fundWallet } = useFundWallet({ onUserExited: () => void onSync() });
+  const { fund: fundFiat } = useFiatOnramp();
+  const fiatOnrampAvailable = isSolanaFiatOnrampAvailable();
 
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -79,8 +81,8 @@ export function MemberWalletFundingCard({
   const hasUsdc = hasDbWalletRow && usdcBal >= 0.01;
   const swapReady = hasGas && (hasUsdc || phrBal > 0);
 
-  const solanaChain =
-    process.env.NEXT_PUBLIC_SOLANA_CLUSTER === "devnet" ? ("solana:devnet" as const) : ("solana:mainnet" as const);
+  const solanaChain = getSolanaCaip2Chain();
+  const solanaClusterLabel = solanaChain === "solana:devnet" ? "devnet" : "mainnet";
 
   const qrUrl = useMemo(() => {
     if (!primaryWallet) return "";
@@ -94,26 +96,28 @@ export function MemberWalletFundingCard({
   }, []);
 
   const openFund = useCallback(
-    async (asset: "native-currency" | "USDC") => {
-      if (!primaryWallet) return;
+    async (asset: "sol" | "usdc") => {
+      if (!primaryWallet || !fiatOnrampAvailable) return;
       onBusyChange("fund");
       try {
-        await fundWallet({
-          address: primaryWallet,
-          options: {
-            chain: solanaChain,
+        await fundFiat({
+          source: { assets: ["usd"], defaultAsset: "usd" },
+          destination: {
             asset,
-            amount: asset === "USDC" ? "25" : "0.05",
+            chain: solanaChain,
+            address: primaryWallet,
           },
+          environment: process.env.NODE_ENV === "production" ? "production" : "sandbox",
+          defaultAmount: asset === "usdc" ? "25" : "50",
         });
       } catch {
-        /* modal closed */
+        /* modal closed or flow cancelled */
       } finally {
         onBusyChange("");
         await onSync();
       }
     },
-    [fundWallet, onBusyChange, onSync, primaryWallet, solanaChain],
+    [fiatOnrampAvailable, fundFiat, onBusyChange, onSync, primaryWallet, solanaChain],
   );
 
   return (
@@ -238,8 +242,9 @@ export function MemberWalletFundingCard({
                         type="button"
                         size="sm"
                         className="bg-phronis-teal text-phronis-void hover:opacity-90"
-                        disabled={!primaryWallet || !!busy}
-                        onClick={() => void openFund("native-currency")}
+                        disabled={!primaryWallet || !!busy || !fiatOnrampAvailable}
+                        title={!fiatOnrampAvailable ? "Card on-ramp requires Solana mainnet" : undefined}
+                        onClick={() => void openFund("sol")}
                       >
                         <WalletAssetAvatar kind="token" tokenId="sol" size={18} className="mr-2" />
                         Fund SOL
@@ -249,8 +254,9 @@ export function MemberWalletFundingCard({
                         size="sm"
                         variant="outline"
                         className="border-phronis-teal/40 text-phronis-teal hover:bg-phronis-teal/10"
-                        disabled={!primaryWallet || !!busy}
-                        onClick={() => void openFund("USDC")}
+                        disabled={!primaryWallet || !!busy || !fiatOnrampAvailable}
+                        title={!fiatOnrampAvailable ? "Card on-ramp requires Solana mainnet" : undefined}
+                        onClick={() => void openFund("usdc")}
                       >
                         <WalletAssetAvatar kind="token" tokenId="usdc" size={18} className="mr-2" />
                         {busy === "fund" ? "Opening…" : "Fund USDC"}
@@ -327,12 +333,22 @@ export function MemberWalletFundingCard({
                     <p className="font-medium text-phronis-foreground">Funding options</p>
                     <ol className="list-decimal space-y-2 pl-5 marker:text-phronis-teal/80">
                       <li>
-                        <strong className="text-phronis-foreground/90">Card on-ramp (Privy):</strong> use Fund SOL or Fund USDC — availability
-                        depends on your region and Privy dashboard settings.
+                        <strong className="text-phronis-foreground/90">Card on-ramp (Privy):</strong>{" "}
+                        {fiatOnrampAvailable ? (
+                          <>
+                            use Fund SOL or Fund USDC — Privy shows providers enabled in your dashboard (Meld, MoonPay, Coinbase, etc.) for
+                            your region.
+                          </>
+                        ) : (
+                          <>
+                            disabled on devnet. Set <code className="text-phronis-teal">NEXT_PUBLIC_SOLANA_CLUSTER=mainnet</code> in production
+                            to use card funding.
+                          </>
+                        )}
                       </li>
                       <li>
                         <strong className="text-phronis-foreground/90">Exchange withdraw:</strong> send SOL (gas) and/or USDC (SPL) to the
-                        address above on {process.env.NEXT_PUBLIC_SOLANA_CLUSTER === "devnet" ? "devnet" : "mainnet"}.
+                        address above on {solanaClusterLabel}.
                       </li>
                       <li>
                         <strong className="text-phronis-foreground/90">Another wallet:</strong> paste the address or scan the QR, then confirm
