@@ -118,7 +118,9 @@ export const WALLET_TOKENS: Record<WalletTokenId, WalletTokenMeta> = {
     symbol: "PHR",
     name: "Phronis DAO",
     chainId: "solana",
-    logoUrl: `${TW}/solana/info/logo.png`,
+    logoUrl:
+      process.env.NEXT_PUBLIC_PHR_TOKEN_LOGO_URL?.trim() ||
+      `${TW}/solana/info/logo.png`,
   },
 };
 

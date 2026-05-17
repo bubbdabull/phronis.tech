@@ -17,6 +17,8 @@ import {
 } from "@/_lib/privy-solana-accounts";
 import { databaseErrorResponse } from "@/_lib/member/db-error";
 import { fetchWalletBalances } from "@/_lib/solana/balances";
+import { getUsdcMint } from "@/_lib/phronis-usdc";
+import { buildSplBalancesPayload } from "@/_lib/wallet/spl-balance-store";
 
 function extractEmailFromAccounts(accounts: unknown[]): string | null {
   for (const raw of accounts) {
@@ -191,10 +193,15 @@ export async function POST(request: Request) {
   }
 
   const mint = getPhrDaoTokenMint();
+  const usdcMint = getUsdcMint();
   const linkedAddresses = [...syncTargets.keys()];
   if (linkedAddresses.length > 0) {
     for (const addr of linkedAddresses) {
       const balances = await fetchWalletBalances(addr, mint);
+      const splStored = await buildSplBalancesPayload(balances.discovered, {
+        usdcMint,
+        phrMint: mint,
+      });
       const { data: w } = await supabase.from("wallets").select("id").eq("member_id", memberId).eq("wallet_address", addr).maybeSingle();
       if (w?.id) {
         const { error: upWErr } = await supabase
@@ -203,6 +210,7 @@ export async function POST(request: Request) {
             sol_balance: balances.sol,
             phronis_balance: balances.phronis,
             usdc_balance: balances.usdc,
+            spl_balances: splStored,
           })
           .eq("id", w.id);
         if (upWErr) {
@@ -219,6 +227,7 @@ export async function POST(request: Request) {
           sol_balance: balances.sol,
           phronis_balance: balances.phronis,
           usdc_balance: balances.usdc,
+          spl_balances: splStored,
         });
         if (insWErr) {
           if (process.env.NODE_ENV !== "production") console.error("[onboarding/sync] wallet insert", insWErr);

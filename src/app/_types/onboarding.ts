@@ -27,6 +27,8 @@ export type WalletRow = {
   sol_balance: string;
   phronis_balance: string;
   usdc_balance: string;
+  /** Auto-discovered SPL tokens (mint → balance + optional symbol/name/logo). */
+  spl_balances?: Record<string, unknown> | null;
   updated_at: string;
 };
 

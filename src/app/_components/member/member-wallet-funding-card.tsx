@@ -11,7 +11,9 @@ import {
 import { useCallback, useMemo, useState } from "react";
 
 import { BuyPhronisSection } from "@/_components/member/buy-phr-section";
+import { MemberEarnSection } from "@/_components/member/member-earn-section";
 import { SolanaCardFundingPanel } from "@/_components/member/solana-card-funding-panel";
+import { SolanaTokenHoldings } from "@/_components/member/solana-token-holdings";
 import { DeskTokenAvatar } from "@/_features/member-desk/desk-token-avatar";
 import { EvmChainsGrid } from "@/_components/wallet/evm-chains-grid";
 import { WalletAssetAvatar } from "@/_components/wallet/wallet-asset-avatar";
@@ -241,9 +243,9 @@ export function MemberWalletFundingCard({
                       )}
                     </p>
                     <p className="mt-2 leading-relaxed">
-                      Only send <strong className="text-phronis-foreground/80">SOL</strong> and{" "}
-                      <strong className="text-phronis-foreground/80">USDC</strong> on the correct network to this address. Other tokens may
-                      be lost if sent to the wrong mint or chain.
+                      You can receive any SPL token on Solana at this address. After syncing, balances appear in{" "}
+                      <strong className="text-phronis-foreground/80">Solana tokens</strong> below. Only use Solana mainnet/devnet matching
+                      your app setting — wrong-chain sends cannot be recovered.
                     </p>
                   </div>
 
@@ -259,6 +261,8 @@ export function MemberWalletFundingCard({
                     onBusyChange={onBusyChange}
                     onSync={onSync}
                   />
+
+                  <SolanaTokenHoldings wallets={wallets} solBal={solBal} hasDbWalletRow={hasDbWalletRow} />
 
                   {wallets.length > 1 ? (
                     <ul className="divide-y divide-white/10 rounded-lg border border-white/10 text-xs">
@@ -405,6 +409,13 @@ export function MemberWalletFundingCard({
                 ) : null}
               </div>
               <EvmChainsGrid />
+              <MemberEarnSection
+                smartWalletAddress={smartWalletAddress}
+                ethReady={ethSmartStatus === "ready"}
+                busy={busy}
+                onBusyChange={onBusyChange}
+                onAfterAction={() => void onSync()}
+              />
               {embeddedSolana && embeddedSolana !== primaryWallet ? (
                 <p className="text-xs text-phronis-muted">
                   Privy also reports Solana <span className="font-mono text-phronis-foreground/80">{embeddedSolana.slice(0, 8)}…</span> — sync
