@@ -26,3 +26,12 @@ export const studyGroupCreateSchema = z.object({
 export const groupMessageSchema = z.object({
   body: z.string().min(1).max(4000),
 });
+
+export const postCreateSchema = z.object({
+  body: z.string().min(1).max(2000),
+  visibility: z.enum(["public", "friends"]).default("friends"),
+});
+
+export const postCommentSchema = z.object({
+  body: z.string().min(1).max(1000),
+});

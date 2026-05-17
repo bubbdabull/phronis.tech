@@ -1,8 +1,12 @@
 "use client";
 
 import {
+  ArrowDownLeft,
   ArrowRightLeft,
+  ArrowUpRight,
+  ChevronDown,
   Copy,
+  CreditCard,
   ExternalLink,
   RefreshCw,
   Sparkles,
@@ -14,6 +18,9 @@ import { BuyPhronisSection } from "@/_components/member/buy-phr-section";
 import { MemberEarnSection } from "@/_components/member/member-earn-section";
 import { SolanaCardFundingPanel } from "@/_components/member/solana-card-funding-panel";
 import { SolanaTokenHoldings } from "@/_components/member/solana-token-holdings";
+import { WalletHeroSection } from "@/_components/member/wallet-hero-section";
+import { WalletReceivePanel } from "@/_components/member/wallet-receive-panel";
+import { WalletSendPanel } from "@/_components/member/wallet-send-panel";
 import { DeskTokenAvatar } from "@/_features/member-desk/desk-token-avatar";
 import { EvmChainsGrid } from "@/_components/wallet/evm-chains-grid";
 import { WalletAssetAvatar } from "@/_components/wallet/wallet-asset-avatar";
@@ -71,6 +78,13 @@ export function MemberWalletFundingCard({
     ensureEthAddress,
   } = useEthereumSmartWallet();
   const [copied, setCopied] = useState<string | null>(null);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [receiveOpen, setReceiveOpen] = useState(false);
+  const [explainOpen, setExplainOpen] = useState(false);
+
+  const scrollTo = useCallback((id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const solBal = wallets[0] ? Number(wallets[0].sol_balance) : 0;
   const usdcBal = wallets[0] ? Number(wallets[0].usdc_balance ?? 0) : 0;
@@ -94,8 +108,29 @@ export function MemberWalletFundingCard({
     window.setTimeout(() => setCopied(null), 2000);
   }, []);
 
+  const portfolioHint = hasDbWalletRow ? usdcBal + solBal * 150 : null;
+
   return (
-    <Card className="border-white/10 lg:col-span-2">
+    <Card className="overflow-hidden border-white/10 lg:col-span-2">
+      <WalletSendPanel
+        open={sendOpen}
+        onClose={() => setSendOpen(false)}
+        walletAddress={primaryWallet}
+        solBal={solBal}
+        usdcBal={usdcBal}
+        phrBal={phrBal}
+        busy={busy}
+        onBusyChange={onBusyChange}
+        onAfterSend={() => void onSync()}
+      />
+      <WalletReceivePanel
+        open={receiveOpen}
+        onClose={() => setReceiveOpen(false)}
+        address={primaryWallet}
+        qrUrl={qrUrl}
+        clusterLabel={solanaClusterLabel}
+      />
+
       <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <CardTitle className="flex flex-wrap items-center gap-2">
@@ -150,13 +185,34 @@ export function MemberWalletFundingCard({
               </p>
             ) : null}
 
-            {/* What you need */}
-            <section className="rounded-xl border border-phronis-teal/20 bg-phronis-teal/[0.04] p-4 sm:p-5">
-              <p className="flex items-center gap-2 text-sm font-medium text-phronis-foreground">
+            <WalletHeroSection
+              primaryWallet={primaryWallet}
+              portfolioHint={portfolioHint}
+              swapReady={swapReady}
+              hasDbWalletRow={hasDbWalletRow}
+              hasGas={hasGas}
+              solBal={solBal}
+              usdcBal={usdcBal}
+              phrBal={phrBal}
+              onReceive={() => setReceiveOpen(true)}
+              onSend={() => setSendOpen(true)}
+              onSwap={() => scrollTo("wallet-swap")}
+              onBuy={() => scrollTo("wallet-buy-card")}
+            />
+
+            <button
+              type="button"
+              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-left text-sm transition hover:border-white/20"
+              onClick={() => setExplainOpen((o) => !o)}
+            >
+              <span className="flex items-center gap-2 font-medium text-phronis-foreground">
                 <ArrowRightLeft className="h-4 w-4 text-phronis-teal" aria-hidden />
                 How Phronis uses your balances
-              </p>
-              <ul className="mt-3 grid gap-3 text-sm text-phronis-muted sm:grid-cols-3">
+              </span>
+              <ChevronDown className={cn("h-4 w-4 text-phronis-muted transition", explainOpen && "rotate-180")} aria-hidden />
+            </button>
+            {explainOpen ? (
+              <ul className="grid gap-3 text-sm text-phronis-muted sm:grid-cols-3">
                 <TokenExplainCard tokenId="sol" title="SOL" body="Network fees on Solana (rent, swaps, transfers). Keep a small amount (~0.01+ SOL)." />
                 <TokenExplainCard
                   tokenId="usdc"
@@ -169,59 +225,23 @@ export function MemberWalletFundingCard({
                   body="Phronis DAO token in your wallet. Buy with SOL or USDC via Jupiter after you fund."
                 />
               </ul>
-            </section>
+            ) : null}
 
-            {/* Balances */}
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <BalanceTile tokenId="sol" label="SOL" value={hasDbWalletRow ? solBal.toFixed(4) : "—"} sub="Gas & fees" ok={hasGas} />
-              <BalanceTile
-                tokenId="usdc"
-                label="USDC"
-                value={hasDbWalletRow ? usdcBal.toFixed(2) : "—"}
-                sub="Stable funding"
-                ok={hasUsdc}
-                highlight
-              />
-              <BalanceTile tokenId="phr" label="PHR" value={hasDbWalletRow ? phrBal.toLocaleString() : "—"} sub="DAO token" ok={phrBal > 0} />
-              <div className="flex min-h-[88px] flex-col justify-center rounded-xl border border-white/10 px-4 py-2">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-phronis-muted">Status</p>
-                <p className={cn("mt-1 text-sm font-medium", swapReady ? "text-phronis-teal" : "text-amber-200/90")}>
-                  {!hasDbWalletRow ? "Sync to load" : swapReady ? "Ready to trade" : hasGas ? "Add USDC to swap" : "Add SOL for gas"}
-                </p>
-              </div>
-            </div>
-
-            {/* Solana embedded */}
             <section className="space-y-4">
               <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-phronis-teal/90">
                 <WalletAssetAvatar kind="chain" chainId="solana" size={20} className="rounded-md" />
-                <span>Solana embedded wallet</span>
+                <span>Fund &amp; trade</span>
               </div>
               <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <div className="space-y-4">
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-phronis-muted">Deposit address</p>
-                    <p className="mt-2 break-all font-mono text-sm leading-relaxed text-phronis-foreground">{primaryWallet}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button type="button" variant="outline" size="sm" className="border-white/15" onClick={() => void copyText(primaryWallet, "w")}>
-                        <Copy className="mr-2 h-4 w-4" aria-hidden />
-                        {copied === "w" ? "Copied" : "Copy address"}
-                      </Button>
-                      <Button asChild type="button" variant="outline" size="sm" className="border-white/15">
-                        <a href={explorerAddr(primaryWallet)} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-2 h-4 w-4" aria-hidden />
-                          Solscan
-                        </a>
-                      </Button>
-                    </div>
+                  <div id="wallet-buy-card" className="scroll-mt-24">
+                    <SolanaCardFundingPanel
+                      walletAddress={primaryWallet}
+                      busy={busy}
+                      onBusyChange={onBusyChange}
+                      onAfterFlow={() => void onSync()}
+                    />
                   </div>
-
-                  <SolanaCardFundingPanel
-                    walletAddress={primaryWallet}
-                    busy={busy}
-                    onBusyChange={onBusyChange}
-                    onAfterFlow={() => void onSync()}
-                  />
 
                   <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-3 text-xs text-phronis-muted">
                     <div className="flex items-center gap-2 font-medium text-phronis-foreground/90">
@@ -250,18 +270,20 @@ export function MemberWalletFundingCard({
                     </p>
                   </div>
 
-                  <BuyPhronisSection
-                    primaryWallet={primaryWallet}
-                    hasGas={hasGas}
-                    hasUsdc={hasUsdc}
-                    usdcBal={usdcBal}
-                    solBal={solBal}
-                    phrBal={phrBal}
-                    solanaChain={solanaChain}
-                    busy={busy}
-                    onBusyChange={onBusyChange}
-                    onSync={onSync}
-                  />
+                  <div id="wallet-swap" className="scroll-mt-24">
+                    <BuyPhronisSection
+                      primaryWallet={primaryWallet}
+                      hasGas={hasGas}
+                      hasUsdc={hasUsdc}
+                      usdcBal={usdcBal}
+                      solBal={solBal}
+                      phrBal={phrBal}
+                      solanaChain={solanaChain}
+                      busy={busy}
+                      onBusyChange={onBusyChange}
+                      onSync={onSync}
+                    />
+                  </div>
 
                   <SolanaTokenHoldings wallets={wallets} solBal={solBal} hasDbWalletRow={hasDbWalletRow} />
 
@@ -281,14 +303,36 @@ export function MemberWalletFundingCard({
                 </div>
 
                 <div className="flex flex-col gap-5 border-t border-white/10 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
-                  {qrUrl ? (
-                    <div className="flex flex-col items-center sm:items-start">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={qrUrl} width={180} height={180} className="rounded-xl border border-white/10" alt="Solana deposit QR" />
-                      <p className="mt-2 max-w-[180px] text-center text-[11px] text-phronis-muted sm:text-left">
-                        Scan to deposit SOL or USDC (SPL) to this address
-                      </p>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="text-xs font-medium text-phronis-muted">Your address</p>
+                    <p className="mt-2 break-all font-mono text-sm text-phronis-foreground">{primaryWallet}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button type="button" size="sm" variant="outline" className="border-white/15" onClick={() => setReceiveOpen(true)}>
+                        <ArrowDownLeft className="mr-2 h-4 w-4" />
+                        Receive
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" className="border-white/15" onClick={() => void copyText(primaryWallet, "w")}>
+                        <Copy className="mr-2 h-4 w-4" />
+                        {copied === "w" ? "Copied" : "Copy"}
+                      </Button>
+                      <Button asChild type="button" size="sm" variant="outline" className="border-white/15">
+                        <a href={explorerAddr(primaryWallet)} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Solscan
+                        </a>
+                      </Button>
                     </div>
+                  </div>
+                  {qrUrl ? (
+                    <button
+                      type="button"
+                      className="flex flex-col items-center rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 transition hover:border-phronis-teal/30 sm:items-start"
+                      onClick={() => setReceiveOpen(true)}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={qrUrl} width={160} height={160} className="rounded-xl" alt="Deposit QR" />
+                      <p className="mt-2 text-center text-[11px] text-phronis-muted sm:text-left">Tap for full receive screen</p>
+                    </button>
                   ) : null}
                   <div className="space-y-3 text-sm text-phronis-muted">
                     <p className="font-medium text-phronis-foreground">Funding options</p>
@@ -478,42 +522,6 @@ function MintChip({ tokenId, mint, explorer }: { tokenId: WalletTokenId; mint: s
       <span className="font-medium">{tokenId.toUpperCase()}</span>
       <span className="max-w-[88px] truncate font-mono text-phronis-muted">{mint.slice(0, 4)}…{mint.slice(-4)}</span>
     </a>
-  );
-}
-
-function BalanceTile({
-  tokenId,
-  label,
-  value,
-  sub,
-  ok,
-  highlight,
-}: {
-  tokenId: WalletTokenId;
-  label: string;
-  value: string;
-  sub: string;
-  ok?: boolean;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border px-4 py-3",
-        highlight ? "border-phronis-teal/25 bg-phronis-teal/5" : "border-white/10 bg-white/[0.03]",
-      )}
-    >
-      <div className="flex items-center gap-2">
-        {tokenId === "phr" && PHR_MINT ? (
-          <DeskTokenAvatar mint={PHR_MINT} symbol="PHR" size={28} className="rounded-full" />
-        ) : (
-          <WalletAssetAvatar kind="token" tokenId={tokenId} size={28} />
-        )}
-        <p className="text-[11px] font-medium uppercase tracking-wider text-phronis-muted">{label}</p>
-      </div>
-      <p className="mt-2 font-mono text-2xl font-semibold tracking-tight text-phronis-foreground">{value}</p>
-      <p className={cn("mt-0.5 text-[11px]", ok ? "text-phronis-teal" : "text-phronis-muted")}>{sub}</p>
-    </div>
   );
 }
 

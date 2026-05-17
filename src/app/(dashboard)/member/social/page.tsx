@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { MemberSocialHub } from "@/_features/member-hub/member-social-hub";
 
 export const metadata: Metadata = {
-  title: "Member social",
-  description: "Friends, requests, and study room chat.",
+  title: "Social",
+  description: "Member feed, friends, messages, and study rooms.",
   robots: { index: false, follow: false },
 };
 
