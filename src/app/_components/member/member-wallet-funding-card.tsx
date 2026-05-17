@@ -107,8 +107,9 @@ export function MemberWalletFundingCard({
           </CardTitle>
           <CardDescription className="max-w-2xl leading-relaxed">
             Step 2 — fund your embedded <strong className="font-medium text-phronis-foreground/90">Solana</strong> wallet (SOL, USDC, PHR),
-            preview PHR swaps below, and use your <strong className="font-medium text-phronis-foreground/90">Ethereum smart wallet</strong>{" "}
-            for EVM apps. Sync pulls live balances from chain into your profile.
+            preview PHR swaps below, use your <strong className="font-medium text-phronis-foreground/90">Ethereum smart wallet</strong>{" "}
+            for EVM apps and <strong className="font-medium text-phronis-foreground/90">Privy Earn</strong> (USDC yield). Sync pulls live
+            balances from chain into your profile.
           </CardDescription>
         </div>
         <Button
@@ -322,8 +323,17 @@ export function MemberWalletFundingCard({
               </div>
               <p className="text-sm leading-relaxed text-phronis-muted">
                 Your account includes an ERC-4337 smart wallet on Ethereum for sponsored transactions (paymaster) when configured in the Privy
-                dashboard. Use it for EVM apps; PHR and USDC swaps on Phronis use your Solana address above.
+                dashboard. Use it for EVM apps and Privy Earn (Morpho USDC vault). PHR and USDC swaps on Phronis use your Solana address above.
               </p>
+
+              <MemberEarnSection
+                smartWalletAddress={smartWalletAddress}
+                ethReady={ethSmartStatus === "ready"}
+                busy={busy}
+                onBusyChange={onBusyChange}
+                onAfterAction={() => void onSync()}
+              />
+
               <div className="grid gap-3 sm:grid-cols-2">
                 {smartWalletAddress ? (
                   <WalletAddressRow
@@ -409,13 +419,6 @@ export function MemberWalletFundingCard({
                 ) : null}
               </div>
               <EvmChainsGrid />
-              <MemberEarnSection
-                smartWalletAddress={smartWalletAddress}
-                ethReady={ethSmartStatus === "ready"}
-                busy={busy}
-                onBusyChange={onBusyChange}
-                onAfterAction={() => void onSync()}
-              />
               {embeddedSolana && embeddedSolana !== primaryWallet ? (
                 <p className="text-xs text-phronis-muted">
                   Privy also reports Solana <span className="font-mono text-phronis-foreground/80">{embeddedSolana.slice(0, 8)}…</span> — sync

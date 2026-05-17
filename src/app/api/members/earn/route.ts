@@ -8,8 +8,20 @@ import {
   fetchEarnPosition,
   getPrivyEarnVaultId,
   isPrivyEarnConfigured,
-  resolvePrivyWalletIdByAddress,
+  resolveEarnWalletId,
 } from "@/_lib/privy-earn";
+
+function earnNotConfigured() {
+  return NextResponse.json(
+    {
+      ok: false,
+      configured: false,
+      error: "earn_not_configured",
+      message: "Set PRIVY_EARN_VAULT_ID from Privy Dashboard → Wallet infrastructure → Earn.",
+    },
+    { status: 503 },
+  );
+}
 
 export async function GET(request: Request) {
   const session = await requirePrivySession(request);
@@ -17,24 +29,31 @@ export async function GET(request: Request) {
   const rl = memberL3RateLimit(request, session.userId, "earn_position", "read");
   if (rl) return rl;
 
-  if (!isPrivyEarnConfigured()) {
-    return NextResponse.json({ ok: false, error: "earn_not_configured" }, { status: 503 });
-  }
-
+  const configured = isPrivyEarnConfigured();
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address")?.trim();
+
   if (!address) {
-    return NextResponse.json({ ok: false, error: "missing_address" }, { status: 400 });
+    return NextResponse.json({ ok: true, configured });
   }
+
+  if (!configured) return earnNotConfigured();
 
   const vaultId = getPrivyEarnVaultId()!;
-  const walletId = await resolvePrivyWalletIdByAddress(session.privy, address);
+  const walletId = await resolveEarnWalletId(session.privy, session.userId, address);
   if (!walletId) {
-    return NextResponse.json({ ok: false, error: "wallet_not_found" }, { status: 404 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "wallet_not_found",
+        message: "Ethereum smart wallet not linked to your account, or Privy wallet id missing.",
+      },
+      { status: 404 },
+    );
   }
 
-  const position = await fetchEarnPosition(session.privy, walletId, vaultId);
-  return NextResponse.json({ ok: true, position, vaultId });
+  const position = await fetchEarnPosition(walletId, vaultId);
+  return NextResponse.json({ ok: true, configured: true, position });
 }
 
 export async function POST(request: Request) {
@@ -43,9 +62,7 @@ export async function POST(request: Request) {
   const rl = memberL3RateLimit(request, session.userId, "earn_action", "write");
   if (rl) return rl;
 
-  if (!isPrivyEarnConfigured()) {
-    return NextResponse.json({ ok: false, error: "earn_not_configured" }, { status: 503 });
-  }
+  if (!isPrivyEarnConfigured()) return earnNotConfigured();
 
   let body: { action?: string; amount?: string; address?: string };
   try {
@@ -62,9 +79,16 @@ export async function POST(request: Request) {
   }
 
   const vaultId = getPrivyEarnVaultId()!;
-  const walletId = await resolvePrivyWalletIdByAddress(session.privy, address);
+  const walletId = await resolveEarnWalletId(session.privy, session.userId, address);
   if (!walletId) {
-    return NextResponse.json({ ok: false, error: "wallet_not_found" }, { status: 404 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "wallet_not_found",
+        message: "Could not resolve your Ethereum wallet in Privy. Sync, then try again.",
+      },
+      { status: 404 },
+    );
   }
 
   try {
@@ -72,7 +96,14 @@ export async function POST(request: Request) {
       action === "deposit"
         ? await earnDeposit(session.privy, walletId, vaultId, amount)
         : await earnWithdraw(session.privy, walletId, vaultId, amount);
-    return NextResponse.json({ ok: true, action: result });
+    return NextResponse.json({
+      ok: true,
+      action: result,
+      message:
+        action === "deposit"
+          ? "Deposit submitted — it may take a minute to confirm onchain."
+          : "Withdrawal submitted — it may take a minute to confirm onchain.",
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "earn_action_failed";
     return NextResponse.json({ ok: false, error: "earn_action_failed", message }, { status: 502 });
