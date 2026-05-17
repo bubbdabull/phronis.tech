@@ -1,6 +1,5 @@
 "use client";
 
-import { useFundWallet } from "@privy-io/react-auth/solana";
 import {
   ArrowRightLeft,
   Copy,
@@ -12,6 +11,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 
 import { BuyPhronisSection } from "@/_components/member/buy-phr-section";
+import { SolanaCardFundingPanel } from "@/_components/member/solana-card-funding-panel";
 import { DeskTokenAvatar } from "@/_features/member-desk/desk-token-avatar";
 import { EvmChainsGrid } from "@/_components/wallet/evm-chains-grid";
 import { WalletAssetAvatar } from "@/_components/wallet/wallet-asset-avatar";
@@ -68,8 +68,6 @@ export function MemberWalletFundingCard({
     ethProvisioning,
     ensureEthAddress,
   } = useEthereumSmartWallet();
-  const { fundWallet } = useFundWallet({ onUserExited: () => void onSync() });
-
   const [copied, setCopied] = useState<string | null>(null);
 
   const solBal = wallets[0] ? Number(wallets[0].sol_balance) : 0;
@@ -93,29 +91,6 @@ export function MemberWalletFundingCard({
     setCopied(key);
     window.setTimeout(() => setCopied(null), 2000);
   }, []);
-
-  const openFund = useCallback(
-    async (asset: "native-currency" | "USDC") => {
-      if (!primaryWallet) return;
-      onBusyChange("fund");
-      try {
-        await fundWallet({
-          address: primaryWallet,
-          options: {
-            chain: solanaChain,
-            asset,
-            amount: asset === "USDC" ? "25" : "0.05",
-          },
-        });
-      } catch {
-        /* modal closed */
-      } finally {
-        onBusyChange("");
-        await onSync();
-      }
-    },
-    [fundWallet, onBusyChange, onSync, primaryWallet, solanaChain],
-  );
 
   return (
     <Card className="border-white/10 lg:col-span-2">
@@ -235,29 +210,15 @@ export function MemberWalletFundingCard({
                           Solscan
                         </a>
                       </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="bg-phronis-teal text-phronis-void hover:opacity-90"
-                        disabled={!primaryWallet || !!busy}
-                        onClick={() => void openFund("native-currency")}
-                      >
-                        <WalletAssetAvatar kind="token" tokenId="sol" size={18} className="mr-2" />
-                        Fund SOL
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="border-phronis-teal/40 text-phronis-teal hover:bg-phronis-teal/10"
-                        disabled={!primaryWallet || !!busy}
-                        onClick={() => void openFund("USDC")}
-                      >
-                        <WalletAssetAvatar kind="token" tokenId="usdc" size={18} className="mr-2" />
-                        {busy === "fund" ? "Opening…" : "Fund USDC"}
-                      </Button>
                     </div>
                   </div>
+
+                  <SolanaCardFundingPanel
+                    walletAddress={primaryWallet}
+                    busy={busy}
+                    onBusyChange={onBusyChange}
+                    onAfterFlow={() => void onSync()}
+                  />
 
                   <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-3 text-xs text-phronis-muted">
                     <div className="flex items-center gap-2 font-medium text-phronis-foreground/90">
@@ -328,8 +289,8 @@ export function MemberWalletFundingCard({
                     <p className="font-medium text-phronis-foreground">Funding options</p>
                     <ol className="list-decimal space-y-2 pl-5 marker:text-phronis-teal/80">
                       <li>
-                        <strong className="text-phronis-foreground/90">Card on-ramp (Privy):</strong> use Fund SOL or Fund USDC — card purchases
-                        require Solana mainnet in production; availability depends on your region and Privy dashboard settings.
+                        <strong className="text-phronis-foreground/90">Card on-ramp (Privy):</strong> choose Coinbase, MoonPay, or Meld under Buy
+                        with card — Meld includes Transak, Swapped, and other providers enabled in your dashboard.
                       </li>
                       <li>
                         <strong className="text-phronis-foreground/90">Exchange withdraw:</strong> send SOL (gas) and/or USDC (SPL) to the

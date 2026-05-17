@@ -27,10 +27,16 @@ export function getPrivyEmbeddedCreateOnLogin(): {
   };
 }
 
-/** Optional paymaster context for `@privy-io/react-auth/smart-wallets` (public JSON only — prefer dashboard for secrets). */
 /** CAIP-2 Solana chain for Privy funding hooks and swaps. */
 export function getSolanaCaip2Chain(): "solana:mainnet" | "solana:devnet" {
   return process.env.NEXT_PUBLIC_SOLANA_CLUSTER === "devnet" ? "solana:devnet" : "solana:mainnet";
+}
+
+/** Privy fiat on-ramp environment (Meld aggregator). Prefer production on mainnet. */
+export function getPrivyFiatOnrampEnvironment(): "production" | "sandbox" {
+  const raw = process.env.NEXT_PUBLIC_PRIVY_ONRAMP_ENVIRONMENT?.trim().toLowerCase();
+  if (raw === "sandbox" || raw === "production") return raw;
+  return process.env.NEXT_PUBLIC_SOLANA_CLUSTER === "devnet" ? "sandbox" : "production";
 }
 
 export function getPrivySmartWalletPaymasterContext(): Record<string, unknown> | undefined {
