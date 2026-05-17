@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Lora, Plus_Jakarta_Sans } from "next/font/google";
 
-import { SiteFooter } from "@/_components/layout/site-footer";
-import { SiteHeader } from "@/_components/layout/site-header";
+import { SiteChrome } from "@/_components/layout/site-chrome";
 import { PrivyAppWrapper } from "@/_components/providers/privy-app-wrapper";
 import { SITE } from "@/_lib/site-content";
 
@@ -98,9 +97,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <PrivyAppWrapper>
-          <SiteHeader />
-          <main id="main">{children}</main>
-          <SiteFooter />
+          <SiteChrome>
+            <main id="main">{children}</main>
+          </SiteChrome>
         </PrivyAppWrapper>
       </body>
     </html>
