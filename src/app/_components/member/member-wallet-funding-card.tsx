@@ -20,6 +20,7 @@ import { SolanaCardFundingPanel } from "@/_components/member/solana-card-funding
 import { SolanaTokenHoldings } from "@/_components/member/solana-token-holdings";
 import { WalletHeroSection } from "@/_components/member/wallet-hero-section";
 import { WalletReceivePanel } from "@/_components/member/wallet-receive-panel";
+import { PhronisLiquidityExplainer } from "@/_components/member/phronis-liquidity-explainer";
 import { WalletSendPanel } from "@/_components/member/wallet-send-panel";
 import { DeskTokenAvatar } from "@/_features/member-desk/desk-token-avatar";
 import { EvmChainsGrid } from "@/_components/wallet/evm-chains-grid";
@@ -207,24 +208,27 @@ export function MemberWalletFundingCard({
             >
               <span className="flex items-center gap-2 font-medium text-phronis-foreground">
                 <ArrowRightLeft className="h-4 w-4 text-phronis-teal" aria-hidden />
-                How Phronis uses your balances
+                How Phronis works
               </span>
               <ChevronDown className={cn("h-4 w-4 text-phronis-muted transition", explainOpen && "rotate-180")} aria-hidden />
             </button>
             {explainOpen ? (
-              <ul className="grid gap-3 text-sm text-phronis-muted sm:grid-cols-3">
-                <TokenExplainCard tokenId="sol" title="SOL" body="Network fees on Solana (rent, swaps, transfers). Keep a small amount (~0.01+ SOL)." />
-                <TokenExplainCard
-                  tokenId="usdc"
-                  title="USDC"
-                  body="Primary stablecoin for funding and trading. PHR pairs trade against USDC liquidity on Solana."
-                />
-                <TokenExplainCard
-                  tokenId="phr"
-                  title="PHR"
-                  body="Phronis DAO token in your wallet. Buy with SOL or USDC via Jupiter after you fund."
-                />
-              </ul>
+              <div className="space-y-4">
+                <ul className="grid gap-3 text-sm text-phronis-muted sm:grid-cols-3">
+                  <TokenExplainCard tokenId="sol" title="SOL" body="Network fees on Solana (rent, swaps, transfers). Keep a small amount (~0.01+ SOL)." />
+                  <TokenExplainCard
+                    tokenId="usdc"
+                    title="USDC"
+                    body="Primary stablecoin for funding and trading. PHR pairs trade against USDC liquidity on Solana."
+                  />
+                  <TokenExplainCard
+                    tokenId="phr"
+                    title="PHR"
+                    body="Phronis DAO token in your wallet. Buy with SOL or USDC via Jupiter after you fund."
+                  />
+                </ul>
+                <PhronisLiquidityExplainer />
+              </div>
             ) : null}
 
             <section className="space-y-4">
